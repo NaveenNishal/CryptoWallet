@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blockchain Wallet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blockchain Wallet</h1>
+
+        <h2>Balance</h2>
+        <div id="balance"></div>
+
+        <h2>Make Transaction</h2>
+        <form id="transaction-form">
+            <label for="recipient">Recipient Address:</label>
+            <input type="text" id="recipient" required>
+
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" min="0" step="0.01" required>
+
+            <button type="submit">Send</button>
+        </form>
+
+        <div id="transaction-message" class="message"></div>
+
+        <!-- Button for Transaction History Page -->
+        <button onclick="window.location.href = '/transaction_history';">Transaction History</button>
+    </div>
+
+    <script>
+        // Get the balance
+        fetch('/balance')
+            .then(response => response.json())
+            .then(data => {
+                const balanceElement = document.getElementById('balance');
+                balanceElement.innerHTML = `Address: ${data.address}<br>Balance: ${data.balance}`;
+            });
+
+        // Handle the transaction form submission
+        const transactionForm = document.getElementById('transaction-form');
+        const transactionMessage = document.getElementById('transaction-message');
+
+        transactionForm.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const recipient = document.getElementById('recipient').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            const data = {
+                recipient: recipient,
+                amount: amount
+            };
+
+            fetch('/transaction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                transactionMessage.innerHTML = data.message;
+                transactionForm.reset();
+                // Update balance after successful transaction
+                fetch('/balance')
+                    .then(response => response.json())
+                    .then(data => {
+                        const balanceElement = document.getElementById('balance');
+                        balanceElement.innerHTML = `Address: ${data.address}<br>Balance: ${data.balance}`;
+                    });
+            })
+            .catch(error => {
+                transactionMessage.innerHTML = 'An error occurred.';
+                console.error(error);
+            });
+        });
+    </script>
+</body>
+</html>
+
+

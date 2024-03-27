@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blockchain Wallet</title>
+    <style>
+        /* CSS styles */
+        /* Add your styles here */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blockchain Wallet</h1>
+
+        <h2>Balance</h2>
+        <div id="balance"></div>
+
+        <h2>Make Transaction</h2>
+        <form id="transaction-form">
+            <label for="recipient">Recipient Address:</label>
+            <input type="text" id="recipient" required>
+
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" min="0" step="0.01" required>
+
+            <button type="submit" id="send-btn">Send</button>
+            <span id="loading-spinner" style="display: none;">Processing...</span>
+        </form>
+
+        <div id="transaction-message" class="message"></div>
+
+        <!-- Button for Transaction History Page -->
+        <button id="transaction-history-btn">Transaction History</button>
+    </div>
+
+    <script>
+        // JavaScript code
+        const balanceElement = document.getElementById('balance');
+        const transactionForm = document.getElementById('transaction-form');
+        const sendBtn = document.getElementById('send-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const transactionMessage = document.getElementById('transaction-message');
+        const transactionHistoryBtn = document.getElementById('transaction-history-btn'); // Added button reference
+
+        // Function to update balance
+        function updateBalance() {
+            fetch('/balance')
+                .then(response => response.json())
+                .then(data => {
+                    balanceElement.innerHTML = `Address: ${data.address}<br>Balance: ${data.balance}`;
+                });
+        }
+
+        // Update balance on page load
+        updateBalance();
+
+        // Handle transaction form submission
+        transactionForm.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const recipient = document.getElementById('recipient').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            sendBtn.disabled = true; // Disable send button during processing
+            loadingSpinner.style.display = 'inline'; // Show loading spinner
+
+            fetch('/transaction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ recipient: recipient, amount: amount })
+            })
+            .then(response => response.json())
+            .then(data => {
+                transactionMessage.innerHTML = data.message;
+                updateBalance(); // Update balance after successful transaction
+                setTimeout(() => {
+                    transactionMessage.innerHTML = ''; // Clear message after some time
+                    transactionForm.reset(); // Reset form fields
+                    sendBtn.disabled = false; // Re-enable send button
+                    loadingSpinner.style.display = 'none'; // Hide loading spinner
+                }, 3000); // 3 seconds delay
+            })
+            .catch(error => {
+                transactionMessage.innerHTML = 'An error occurred.';
+                console.error(error);
+                sendBtn.disabled = false; // Re-enable send button
+                loadingSpinner.style.display = 'none'; // Hide loading spinner
+            });
+        });
+
+        // Redirect to Transaction History page when button is clicked
+        transactionHistoryBtn.addEventListener('click', () => {
+            window.location.href = '/transaction_history';
+        });
+    </script>
+</body>
+</html>
